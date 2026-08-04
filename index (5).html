@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hardware: the business models within | Price Bailey</title>
+<meta name="robots" content="noindex">
+<!--
+  Standalone, iframe-ready. Hub-and-spoke diagram, dark high-tech panel,
+  matching the tech growth journey graphic (same palette, fx layer, card style).
+  Two shaded wedges behind the spokes show pure hardware vs hybrid hardware
+  models. Click a spoke to see the detail card below. Respects
+  prefers-reduced-motion. Broadcasts height via postMessage for iframe auto-sizing.
+-->
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; }
+  body { padding: 12px; }
+
+  .pb-journey {
+    --pb-navy: #0a1b34;
+    --pb-teal: #00c2b6;
+    --pb-teal-bright: #24e6d8;
+    --pb-blue: #3a78e0;
+    --pb-blue-bright: #6ea3ff;
+    --pb-ink: #2a3340;
+    --pb-muted: #5b6675;
+    --pb-line: #e1e6ee;
+    --pb-bg: #f6f8fb;
+    --pb-card: #ffffff;
+    --pb-light: rgba(255,255,255,.9);
+    --pb-dim: rgba(255,255,255,.6);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--pb-light);
+    width: 100%;
+    max-width: 920px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    container-type: inline-size;
+    container-name: pbj;
+    position: relative;
+    background:
+      radial-gradient(70% 120% at 82% -10%, rgba(0,194,182,.22), transparent 55%),
+      radial-gradient(60% 120% at 12% 110%, rgba(46,124,224,.20), transparent 55%),
+      linear-gradient(165deg, #123156 0%, #0a1b34 60%, #081428 100%);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 18px;
+    padding: clamp(20px, 3.5cqi, 30px) clamp(16px, 3cqi, 28px);
+    box-shadow: 0 22px 55px -26px rgba(4,12,28,.85);
+    overflow: hidden;
+  }
+  .pb-journey *, .pb-journey *::before, .pb-journey *::after { box-sizing: border-box; }
+  .pb-journey ul { list-style: none; margin: 0; padding: 0; }
+  .pb-journey li { list-style: none; margin: 0; }
+  .pb-journey a { text-decoration: none; }
+
+  /* circuit dot-grid + drifting glow fields */
+  .pb-fx { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .pb-fx__grid { position: absolute; inset: -2px;
+    background-image: radial-gradient(rgba(255,255,255,.18) 1px, transparent 1.4px);
+    background-size: 22px 22px; opacity: .12; mask-image: radial-gradient(120% 80% at 50% 20%, #000 40%, transparent 80%);
+    animation: pbGridPan 24s linear infinite; }
+  .pb-fx__glow { position: absolute; border-radius: 50%; filter: blur(60px); }
+  .pb-fx__glow--a { width: 40cqi; height: 40cqi; background: rgba(0,194,182,.28); top: -14cqi; right: -6cqi;
+    animation: pbGlowA 15s ease-in-out infinite alternate; }
+  .pb-fx__glow--b { width: 36cqi; height: 36cqi; background: rgba(52,120,235,.24); bottom: -14cqi; left: -8cqi;
+    animation: pbGlowB 19s ease-in-out infinite alternate; }
+  @keyframes pbGridPan { to { background-position: 22px 22px; } }
+  @keyframes pbGlowA { to { transform: translate(-6cqi, 5cqi) scale(1.14); } }
+  @keyframes pbGlowB { to { transform: translate(6cqi, -5cqi) scale(1.12); } }
+  .pb-journey > *:not(.pb-fx) { position: relative; z-index: 1; }
+
+  .pb-journey__head { text-align: center; margin-bottom: 4px; }
+  .pb-journey__eyebrow { text-transform: uppercase; letter-spacing: .16em; font-size: 11.5px;
+    font-weight: 700; color: var(--pb-teal-bright); margin: 0 0 5px; text-shadow: 0 0 16px rgba(36,230,216,.45); }
+  .pb-journey__title { font-size: clamp(19px, 3.3cqi, 25px); line-height: 1.18; color: #fff;
+    margin: 0 0 6px; font-weight: 700; }
+  .pb-journey__lede { max-width: 580px; margin: 0 auto 6px; color: var(--pb-dim); font-size: 14.5px; line-height: 1.5; }
+
+  /* ---------- Hub-and-spoke diagram ---------- */
+  .pb-hub { position: relative; width: 100%; margin: 6px 0 2px; }
+  .pb-hub svg { width: 100%; height: auto; display: block; overflow: visible; max-width: 460px; margin: 0 auto; }
+  .pb-hub__spoke { stroke: rgba(255,255,255,.28); stroke-width: 1.5; }
+  .pb-wedge--pure { fill: rgba(0,194,182,.20); }
+  .pb-wedge--hybrid { fill: rgba(58,120,224,.30); }
+  .pb-hub__core { fill: rgba(255,255,255,.08); stroke: rgba(255,255,255,.35); stroke-width: 2; }
+  .pb-hub__coretext { fill: #fff; font-size: 12px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+
+  .pb-node { cursor: pointer; }
+  .pb-node__halo { fill: none; stroke: var(--pb-teal-bright); stroke-width: 1.5; stroke-dasharray: 3 5; opacity: 0;
+    transform-box: fill-box; transform-origin: center; }
+  .pb-node[aria-selected="true"] .pb-node__halo { opacity: .9; animation: pbSpinHalo 6s linear infinite; }
+  .pb-node__ring { fill: rgba(255,255,255,.06); stroke: rgba(255,255,255,.3); stroke-width: 3; transition: .2s; }
+  .pb-node:hover .pb-node__ring { stroke: var(--pb-teal-bright); fill: rgba(0,194,182,.12); }
+  .pb-node[aria-selected="true"] .pb-node__ring { fill: var(--pb-teal); stroke: var(--pb-teal-bright);
+    animation: pbPulse 2.2s ease-in-out infinite; }
+  .pb-node--hybrid .pb-node__ring { stroke-dasharray: 4 3; }
+  .pb-node--hybrid[aria-selected="true"] .pb-node__ring { fill: var(--pb-blue); stroke: var(--pb-blue-bright); }
+  .pb-node__num { fill: var(--pb-light); font-weight: 700; font-size: 13px; text-anchor: middle;
+    dominant-baseline: central; pointer-events: none; transition: .2s; }
+  .pb-node[aria-selected="true"] .pb-node__num { fill: var(--pb-navy); }
+  .pb-node__lbl { fill: var(--pb-light); font-size: 11px; font-weight: 600; text-anchor: middle; pointer-events: none; }
+  .pb-node[aria-selected="true"] .pb-node__lbl { fill: #fff; }
+
+  /* ---------- Legend ---------- */
+  .pb-legend { display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; margin: 8px 0 4px; font-size: 12.5px; color: var(--pb-dim); }
+  .pb-legend__item { display: flex; align-items: center; gap: 7px; }
+  .pb-legend__swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+  .pb-legend__swatch--pure { background: rgba(0,194,182,.75); }
+  .pb-legend__swatch--hybrid { background: rgba(58,120,224,.85); }
+
+  /* ---------- Stage detail (white cards pop on dark) ---------- */
+  .pb-stages { margin-top: 14px; }
+  .pb-stage { background: var(--pb-card); border: 1px solid rgba(255,255,255,.12); border-radius: 14px;
+    padding: 20px 20px 18px; box-shadow: 0 12px 30px -16px rgba(0,0,0,.6); }
+  .pb-stage { display: none; }
+  .pb-stage.is-active { display: block; animation: pbStageIn .38s ease both; }
+  .pb-stage__head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .pb-stage__num { font-size: 12.5px; font-weight: 700; color: #fff; background: var(--pb-teal);
+    border-radius: 999px; padding: 3px 10px; letter-spacing: .04em; }
+  .pb-stage__num--hybrid { background: var(--pb-blue); }
+  .pb-stage__title { font-size: 18px; color: var(--pb-navy); margin: 0; font-weight: 700; }
+  .pb-stage__desc { color: var(--pb-muted); font-size: 14.5px; line-height: 1.55; margin: 10px 0 0; }
+
+  /* ---------- Static support grid (always visible) ---------- */
+  .pb-support { margin-top: 14px; }
+  .pb-support__title { font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--pb-teal-bright); margin: 0 0 8px; text-align: center; }
+  .pb-support__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .pb-support__card { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14);
+    border-radius: 12px; padding: 12px 14px; }
+  .pb-support__card h4 { margin: 0 0 4px; font-size: 13.5px; color: #fff; font-weight: 700; }
+  .pb-support__card p { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--pb-dim); }
+
+  @keyframes pbPulse { 0%,100% { filter: drop-shadow(0 0 0 rgba(36,230,216,0)); } 50% { filter: drop-shadow(0 0 9px rgba(36,230,216,.9)); } }
+  @keyframes pbSpinHalo { to { transform: rotate(360deg); } }
+  @keyframes pbStageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pb-journey *, .pb-journey *::before { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<section class="pb-journey" aria-label="Hardware: the business models within">
+  <div class="pb-fx" aria-hidden="true">
+    <div class="pb-fx__grid"></div>
+    <div class="pb-fx__glow pb-fx__glow--a"></div>
+    <div class="pb-fx__glow pb-fx__glow--b"></div>
+  </div>
+
+  <div class="pb-journey__head">
+    <p class="pb-journey__eyebrow">Technology sub-sector: hardware</p>
+    <h2 class="pb-journey__title">Hardware: the business models within</h2>
+    <p class="pb-journey__lede">A hardware business is several businesses in one. Tap a spoke to see how we help, and see where a hybrid, software-enabled model adds an extra layer.</p>
+  </div>
+
+  <div class="pb-hub" data-hub>
+    <svg viewBox="0 0 460 320" role="tablist" aria-label="Hardware business functions">
+      <!-- shaded wedges -->
+      <path class="pb-wedge--pure" d="M 230 158 L 164 43.7 A 132 132 0 1 1 98 158 Z"></path>
+      <path class="pb-wedge--hybrid" d="M 230 158 L 98 158 A 132 132 0 0 1 164 43.7 Z"></path>
+
+      <!-- spokes -->
+      <line class="pb-hub__spoke" x1="230" y1="158" x2="230" y2="54"></line>
+      <line class="pb-hub__spoke" x1="230" y1="158" x2="320.1" y2="106"></line>
+      <line class="pb-hub__spoke" x1="230" y1="158" x2="320.1" y2="210"></line>
+      <line class="pb-hub__spoke" x1="230" y1="158" x2="230" y2="262"></line>
+      <line class="pb-hub__spoke" x1="230" y1="158" x2="139.9" y2="210"></line>
+      <line class="pb-hub__spoke" x1="230" y1="158" x2="139.9" y2="106" stroke-dasharray="3 4"></line>
+
+      <!-- hub core -->
+      <circle class="pb-hub__core" cx="230" cy="158" r="34"></circle>
+      <text class="pb-hub__coretext" x="230" y="153">Hardware</text>
+      <text class="pb-hub__coretext" x="230" y="167">business</text>
+
+      <!-- node: Product design -->
+      <g class="pb-node" data-target="hw-1" role="tab" aria-selected="true">
+        <circle class="pb-node__halo" cx="230" cy="54" r="27"></circle>
+        <circle class="pb-node__ring" cx="230" cy="54" r="20"></circle>
+        <text class="pb-node__num" x="230" y="54">1</text>
+        <text class="pb-node__lbl" x="230" y="14"><tspan x="230" dy="0">Product</tspan><tspan x="230" dy="13">design</tspan></text>
+      </g>
+
+      <!-- node: Procurement -->
+      <g class="pb-node" data-target="hw-2" role="tab" aria-selected="false">
+        <circle class="pb-node__halo" cx="320.1" cy="106" r="27"></circle>
+        <circle class="pb-node__ring" cx="320.1" cy="106" r="20"></circle>
+        <text class="pb-node__num" x="320.1" y="106">2</text>
+        <text class="pb-node__lbl" x="354.7" y="82">Procurement</text>
+      </g>
+
+      <!-- node: Manufacturing -->
+      <g class="pb-node" data-target="hw-3" role="tab" aria-selected="false">
+        <circle class="pb-node__halo" cx="320.1" cy="210" r="27"></circle>
+        <circle class="pb-node__ring" cx="320.1" cy="210" r="20"></circle>
+        <text class="pb-node__num" x="320.1" y="210">3</text>
+        <text class="pb-node__lbl" x="354.7" y="238">Manufacturing</text>
+      </g>
+
+      <!-- node: Logistics -->
+      <g class="pb-node" data-target="hw-4" role="tab" aria-selected="false">
+        <circle class="pb-node__halo" cx="230" cy="262" r="27"></circle>
+        <circle class="pb-node__ring" cx="230" cy="262" r="20"></circle>
+        <text class="pb-node__num" x="230" y="262">4</text>
+        <text class="pb-node__lbl" x="230" y="302">Logistics</text>
+      </g>
+
+      <!-- node: Sales -->
+      <g class="pb-node" data-target="hw-5" role="tab" aria-selected="false">
+        <circle class="pb-node__halo" cx="139.9" cy="210" r="27"></circle>
+        <circle class="pb-node__ring" cx="139.9" cy="210" r="20"></circle>
+        <text class="pb-node__num" x="139.9" y="210">5</text>
+        <text class="pb-node__lbl" x="105.3" y="238">Sales</text>
+      </g>
+
+      <!-- node: Software (hybrid) -->
+      <g class="pb-node pb-node--hybrid" data-target="hw-6" role="tab" aria-selected="false">
+        <circle class="pb-node__halo" cx="139.9" cy="106" r="27"></circle>
+        <circle class="pb-node__ring" cx="139.9" cy="106" r="20"></circle>
+        <text class="pb-node__num" x="139.9" y="106">+</text>
+        <text class="pb-node__lbl" x="105.3" y="82">Software</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="pb-legend">
+    <span class="pb-legend__item"><span class="pb-legend__swatch pb-legend__swatch--pure"></span>Pure hardware models</span>
+    <span class="pb-legend__item"><span class="pb-legend__swatch pb-legend__swatch--hybrid"></span>Hybrid hardware models</span>
+  </div>
+
+  <div class="pb-stages" data-stages>
+    <article class="pb-stage is-active" id="hw-1">
+      <div class="pb-stage__head">
+        <span class="pb-stage__num">1</span>
+        <h3 class="pb-stage__title">Product design</h3>
+      </div>
+      <p class="pb-stage__desc">Every hardware business starts as an innovative product design business. Getting the design right shapes everything that follows, from the cost of components to how easily the product can be manufactured at scale.</p>
+    </article>
+
+    <article class="pb-stage" id="hw-2">
+      <div class="pb-stage__head">
+        <span class="pb-stage__num">2</span>
+        <h3 class="pb-stage__title">Procurement</h3>
+      </div>
+      <p class="pb-stage__desc">A hardware business is also a procurement business, finding a sufficient and reliable supply of the right components. It is a specialist skill, and one of the first places founders feel pressure as they scale.</p>
+    </article>
+
+    <article class="pb-stage" id="hw-3">
+      <div class="pb-stage__head">
+        <span class="pb-stage__num">3</span>
+        <h3 class="pb-stage__title">Manufacturing</h3>
+      </div>
+      <p class="pb-stage__desc">Making the product, whether in-house, contracted out, or moving through a transition between the two. Manufacturing capacity is usually built around a specific factory or supply chain, which sets a natural ceiling on production.</p>
+    </article>
+
+    <article class="pb-stage" id="hw-4">
+      <div class="pb-stage__head">
+        <span class="pb-stage__num">4</span>
+        <h3 class="pb-stage__title">Logistics</h3>
+      </div>
+      <p class="pb-stage__desc">Moving everything to the right place to be ready to distribute, while meeting whatever VAT and tariff legislation applies at the time. Cross-border rules can shift, so this needs ongoing attention rather than a one-off check.</p>
+    </article>
+
+    <article class="pb-stage" id="hw-5">
+      <div class="pb-stage__head">
+        <span class="pb-stage__num">5</span>
+        <h3 class="pb-stage__title">Sales</h3>
+      </div>
+      <p class="pb-stage__desc">Finally, a sales business to actually sell the product. Because every function above sits inside one entity, a pure hardware business carries a complex balance sheet, P&amp;L and cash flow, all bundled into one place.</p>
+    </article>
+
+    <article class="pb-stage" id="hw-6">
+      <div class="pb-stage__head">
+        <span class="pb-stage__num pb-stage__num--hybrid">+</span>
+        <h3 class="pb-stage__title">Software (hybrid models)</h3>
+      </div>
+      <p class="pb-stage__desc">Some clients also provide the software connection themselves, others rely on a software layer that is agnostic to the hardware, and some run a hybrid of both. Add this layer and a pure hardware model becomes a hybrid one, each a genuinely different business to understand and support.</p>
+    </article>
+  </div>
+
+  <div class="pb-support">
+    <p class="pb-support__title">Why hardware businesses need specialist support</p>
+    <div class="pb-support__grid">
+      <div class="pb-support__card">
+        <h4>Regulated hardware</h4>
+        <p>Med tech, defence and similar products bring licensing and regulatory pressures that vary by jurisdiction, alongside political and regulatory considerations.</p>
+      </div>
+      <div class="pb-support__card">
+        <h4>Margin and working capital</h4>
+        <p>Gross margins below 50% are common. As production and margin move through plateaus tied to factory and supply chain capacity, working capital pressure builds and can turn negative if margin slips at the same time.</p>
+      </div>
+      <div class="pb-support__card">
+        <h4>Funding options</h4>
+        <p>Hardware businesses typically have better access to debt funding than software-only peers, often lowering the overall cost of capital alongside equity.</p>
+      </div>
+      <div class="pb-support__card">
+        <h4>Exit readiness</h4>
+        <p>Being due diligence ready means understanding how an investor will appraise each part of the business model, supported by an experienced accountant and corporate financier at least a year or more in advance.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function () {
+  var root = document.querySelector('.pb-journey');
+  if (!root) return;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var stages = Array.prototype.slice.call(root.querySelectorAll('.pb-stage'));
+  var nodes = Array.prototype.slice.call(root.querySelectorAll('.pb-node'));
+
+  function select(targetId) {
+    stages.forEach(function (s) { s.classList.toggle('is-active', s.id === targetId); });
+    nodes.forEach(function (g) { g.setAttribute('aria-selected', g.getAttribute('data-target') === targetId ? 'true' : 'false'); });
+    postHeight();
+  }
+
+  nodes.forEach(function (g) {
+    g.addEventListener('click', function () { select(g.getAttribute('data-target')); });
+  });
+
+  function runIntro() {
+    if (reduce) return;
+    nodes.forEach(function (g, i) {
+      g.style.opacity = '0';
+      g.style.transformBox = 'fill-box'; g.style.transformOrigin = 'center';
+      g.animate([{ opacity: 0, transform: 'scale(.3)' }, { opacity: 1, transform: 'scale(1.12)', offset: .7 }, { opacity: 1, transform: 'scale(1)' }],
+        { duration: 480, delay: 150 + i * 110, easing: 'cubic-bezier(.34,1.56,.64,1)', fill: 'forwards' })
+        .onfinish = function () { g.style.opacity = '1'; g.style.transform = 'none'; };
+    });
+  }
+
+  function currentHeight() { return Math.ceil(document.body.getBoundingClientRect().height) + 4; }
+  function postHeight() {
+    if (window.parent === window) return;
+    window.parent.postMessage({ pbLifecycleHeight: currentHeight() }, '*');
+  }
+  window.addEventListener('load', function () { postHeight(); runIntro(); });
+  window.addEventListener('resize', postHeight);
+  if (window.ResizeObserver) { new ResizeObserver(postHeight).observe(document.body); }
+  postHeight();
+})();
+</script>
+</body>
+</html>
